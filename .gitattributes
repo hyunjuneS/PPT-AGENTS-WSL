@@ -1,0 +1,6 @@
+# Binary files - no diff/merge
+offline_resources/ms-playwright/*.part* binary
+offline_resources/**/*.tgz binary
+offline_resources/**/*.whl binary
+offline_resources/**/*.tar.gz binary
+offline_resources/**/*.bin binary
