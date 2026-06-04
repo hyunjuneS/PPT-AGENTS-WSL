@@ -2840,6 +2840,27 @@ async function html2pptx(htmlFile, pres, options = {}) {
     const launchOptions = { env: { TMPDIR: tmpDir }, timeout: TIMEOUT_MS };
     if (process.platform === 'darwin') {
       launchOptions.channel = 'chrome';
+    } else if (process.platform === 'linux') {
+      // Use bundled chromium if available (offline/unsupported-platform environments)
+      const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || (() => {
+        const path = require('path');
+        const fs = require('fs');
+        // Walk up from this file to find offline_resources/ms-playwright/
+        let dir = __dirname;
+        for (let i = 0; i < 6; i++) {
+          const candidate = path.join(dir, 'offline_resources', 'ms-playwright');
+          if (fs.existsSync(candidate)) {
+            const glob = fs.readdirSync(candidate)
+              .filter(d => d.startsWith('chromium-'))
+              .map(d => path.join(candidate, d, 'chrome-linux64', 'chrome'))
+              .find(p => fs.existsSync(p));
+            if (glob) return glob;
+          }
+          dir = path.dirname(dir);
+        }
+        return null;
+      })();
+      if (executablePath) launchOptions.executablePath = executablePath;
     }
 
     const browser = await chromium.launch(launchOptions);
