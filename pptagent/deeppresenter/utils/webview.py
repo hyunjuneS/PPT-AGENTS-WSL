@@ -1,4 +1,5 @@
 import asyncio
+import os
 import tempfile
 from collections.abc import AsyncIterator, Iterable
 from contextlib import asynccontextmanager
@@ -76,9 +77,12 @@ class PlaywrightConverter:
         async with PlaywrightConverter._lock:
             if PlaywrightConverter._browser is None:
                 PlaywrightConverter._playwright = await async_playwright().start()
+                # PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH allows bypassing platform checks
+                # (e.g. on Ubuntu 26.04 which playwright does not yet recognise)
+                executable_path = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or None
                 PlaywrightConverter._browser = (
                     await PlaywrightConverter._playwright.chromium.launch(
-                        headless=True, args=LAUNCH_ARGS
+                        headless=True, args=LAUNCH_ARGS, executable_path=executable_path
                     )
                 )
 

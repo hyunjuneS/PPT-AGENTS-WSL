@@ -65,6 +65,7 @@ ENV_FILE="$REPO_DIR/.env.offline"
 cat > "$ENV_FILE" << EOF
 # PPTAgent 오프라인 환경변수 - source .env.offline 으로 로드
 export PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_DIR"
+export PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH="$PLAYWRIGHT_DIR/chromium-1223/chrome-linux64/chrome"
 export PLAYWRIGHT_OFFLINE=1
 export OFFLINE_NODE_MODULES="$OFFLINE_DIR/html2pptx"
 export TRANSFORMERS_OFFLINE=1
