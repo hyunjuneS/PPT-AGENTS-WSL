@@ -21,7 +21,7 @@ CHROMIUM_EXTRACTED="$PLAYWRIGHT_DIR/chromium-1223/chrome-linux64/chrome"
 if [ -f "$CHROMIUM_ZIP" ] && [ ! -f "$CHROMIUM_EXTRACTED" ]; then
     echo "[2/5] Playwright Chromium 압축 해제 중..."
     mkdir -p "$PLAYWRIGHT_DIR/chromium-1223"
-    unzip -q "$CHROMIUM_ZIP" -d "$PLAYWRIGHT_DIR/chromium-1223/"
+    python3 -c "import zipfile; zipfile.ZipFile('$CHROMIUM_ZIP').extractall('$PLAYWRIGHT_DIR/chromium-1223/')"
     chmod +x "$CHROMIUM_EXTRACTED"
     echo "✓ 압축 해제 완료: $CHROMIUM_EXTRACTED"
 else
