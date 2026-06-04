@@ -23,6 +23,29 @@ from deeppresenter.utils.log import debug, error
 
 FAKE_UA = UserAgent()
 
+
+def _find_chromium_executable() -> str | None:
+    """Return a chromium executable path for offline/unsupported-platform environments.
+
+    Resolution order:
+    1. PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH env var (explicit override)
+    2. Bundled binary under offline_resources/ms-playwright/ (relative to repo root)
+    3. None — let playwright use its default lookup
+    """
+    explicit = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+    if explicit and Path(explicit).exists():
+        return explicit
+
+    # Walk up from this file to find the repo root (contains offline_resources/)
+    for parent in Path(__file__).parents:
+        candidate = parent / "offline_resources" / "ms-playwright"
+        matches = sorted(candidate.glob("chromium-*/chrome-linux64/chrome"))
+        if matches:
+            return str(matches[-1])
+
+    return None
+
+
 LAUNCH_ARGS = [
     "--no-sandbox",
     "--disable-dev-shm-usage",
@@ -77,9 +100,7 @@ class PlaywrightConverter:
         async with PlaywrightConverter._lock:
             if PlaywrightConverter._browser is None:
                 PlaywrightConverter._playwright = await async_playwright().start()
-                # PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH allows bypassing platform checks
-                # (e.g. on Ubuntu 26.04 which playwright does not yet recognise)
-                executable_path = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or None
+                executable_path = _find_chromium_executable()
                 PlaywrightConverter._browser = (
                     await PlaywrightConverter._playwright.chromium.launch(
                         headless=True, args=LAUNCH_ARGS, executable_path=executable_path
