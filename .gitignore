@@ -1,0 +1,5 @@
+# Offline resources - extracted/assembled files (keep only chunks and tarballs)
+offline_resources/ms-playwright/chromium-linux64.zip
+offline_resources/ms-playwright/chromium-1223/
+offline_resources/fasttext/*.bin
+.env.offline
