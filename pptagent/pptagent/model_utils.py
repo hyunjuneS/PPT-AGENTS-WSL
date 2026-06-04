@@ -32,9 +32,8 @@ def _get_lid_model():
     Resolution order:
     1. FASTTEXT_MODEL_PATH env var (for manual offline placement)
     2. Repo-bundled model at offline_resources/fasttext/lid.176.bin
-    3. HuggingFace / ModelScope cache (already downloaded)
-    4. Download from HuggingFace (requires internet)
-    5. langid fallback (pure-Python, no large model file needed)
+    3. HuggingFace cache (already-downloaded files only, no network call)
+    4. langid fallback (pure-Python, no large model file needed)
     """
     global _LID_MODEL, _USE_LANGID_FALLBACK
     if _LID_MODEL is not None or _USE_LANGID_FALLBACK:
@@ -53,35 +52,19 @@ def _get_lid_model():
         _LID_MODEL = load_model(str(_BUNDLED_MODEL))
         return _LID_MODEL
 
-    # 3. HuggingFace / ModelScope cache
+    # 3. HuggingFace / ModelScope cache (already-downloaded files only, no network call)
     try:
         from huggingface_hub.constants import HUGGINGFACE_HUB_CACHE
-        from modelscope.hub.utils.utils import get_cache_dir
 
         hf_pattern = join(HUGGINGFACE_HUB_CACHE, "*/*/*/lid.176.bin")
-        ms_pattern = join(get_cache_dir(), "*/*/*/lid.176.bin")
-        lid_files = glob(hf_pattern) + glob(ms_pattern)
+        lid_files = glob(hf_pattern)
         if lid_files:
             _LID_MODEL = load_model(lid_files[0])
             return _LID_MODEL
     except Exception:
         pass
 
-    # 4. Download from HuggingFace (requires internet)
-    try:
-        from huggingface_hub import hf_hub_download
-
-        _LID_MODEL = load_model(
-            hf_hub_download(
-                repo_id="julien-c/fasttext-language-id",
-                filename="lid.176.bin",
-            )
-        )
-        return _LID_MODEL
-    except Exception:
-        pass
-
-    # 5. langid fallback — works without large model files
+    # 4. langid fallback — works without large model files
     logger.warning(
         "fasttext lid.176.bin not found (set FASTTEXT_MODEL_PATH or place it at "
         f"{_BUNDLED_MODEL}). Falling back to langid."
