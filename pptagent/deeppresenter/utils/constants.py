@@ -2,6 +2,7 @@
 
 import logging
 import os
+from datetime import datetime
 from pathlib import Path
 
 # ============ Path ============
@@ -27,10 +28,11 @@ CUTOFF_WARNING = "NOTE: Output truncated (showing first {line} lines). Use `read
 PIXEL_MULTIPLE = int(os.getenv("PIXEL_MULTIPLE", 16))
 MCP_CONNECT_TIMEOUT = int(os.getenv("MCP_CONNECT_TIMEOUT", 120))
 MCP_CALL_TIMEOUT = int(os.getenv("MCP_CALL_TIMEOUT", 1800))
+_today = datetime.now().strftime("%Y%m%d")
 WORKSPACE_BASE = Path(
     os.getenv(
         "DEEPPRESENTER_WORKSPACE_BASE",
-        str(Path.home() / ".cache/deeppresenter"),
+        str(PACKAGE_DIR / "output" / _today),
     )
 )
 TOOL_CACHE = PACKAGE_DIR / ".tools.json"
