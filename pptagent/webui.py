@@ -30,8 +30,8 @@ ROLE_EMOJI = {
 }
 
 CONVERT_MAPPING = {
-    "自由生成 (freeform)": ConvertType.DEEPPRESENTER,
     "模版 (templates)": ConvertType.PPTAGENT,
+    "自由生成 (freeform)": ConvertType.DEEPPRESENTER,
 }
 
 
@@ -105,12 +105,12 @@ class ChatDemo:
     def create_interface(self):
         """创建 Gradio 界面"""
         with gr.Blocks(
-            title="DeepPresenter",
+            title="PPTAgent",
             theme=gr.themes.Soft(),
             css=gradio_css,
         ) as demo:
             gr.Markdown(
-                "# DeepPresenter",
+                "# PPTAgent",
                 elem_classes=["center-title"],
             )
 
@@ -149,7 +149,7 @@ class ChatDemo:
                             choices=template_choices + ["auto"],
                             value="auto",
                             scale=2,
-                            visible=False,
+                            visible=True,
                         )
 
                     def _toggle_template_visibility(v: str) -> dict:
