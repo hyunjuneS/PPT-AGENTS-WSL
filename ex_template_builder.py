@@ -40,7 +40,7 @@ from pptagent.induct import ASK_CATEGORY_PROMPT, CATEGORY_SPLIT_TEMPLATE, SlideI
 from pptagent.llms import AsyncLLM
 from pptagent.model_utils import language_id
 from pptagent.multimodal import ImageLabler
-from pptagent.presentation import Presentation
+from pptagent.presentation import Picture, Presentation, SlidePage
 from pptagent.utils import Config, ppt_to_images
 
 DESCRIBE_TEMPLATE_PROMPT = (
@@ -50,6 +50,19 @@ DESCRIBE_TEMPLATE_PROMPT = (
 )
 
 
+def _layout_features(slide: SlidePage, slide_area_pt: float) -> tuple:
+    """Bucket visual layout properties into discrete groups.
+
+    Returns a tuple of (image_ratio_bucket, shape_count_bucket, para_count_bucket)
+    so slides that look structurally similar end up in the same group.
+    """
+    image_area = sum(s.width * s.height for s in slide.shape_filter(Picture))
+    image_bucket = round(min(image_area / slide_area_pt, 1.0) * 4) / 4   # 0, 0.25, 0.5, 0.75, 1.0
+    shape_bucket = min(len(slide.shapes) // 3, 3)                         # 0(0-2), 1(3-5), 2(6-8), 3(9+)
+    para_bucket  = min(len(list(slide.iter_paragraphs())) // 3, 3)        # same buckets as above
+    return (image_bucket, shape_bucket, para_bucket)
+
+
 async def layout_split_no_vit(
     prs: Presentation,
     content_slides_index: set[int],
@@ -57,16 +70,26 @@ async def layout_split_no_vit(
     vision_model: AsyncLLM,
     ppt_image_folder: str,
 ) -> None:
-    """PPTX 레이아웃 이름으로 슬라이드를 그루핑합니다 (ViT 없는 대안)."""
+    """Group slides by layout name + visual feature buckets (no ViT needed).
+
+    Original pipeline uses ViT embeddings to sub-cluster slides with the same
+    (layout_name, content_type). Here we approximate that with three bucketed
+    shape-level features: image area ratio, shape count, paragraph count.
+    This separates table-heavy slides from text-heavy slides even when they
+    share the same PPTX layout name.
+    """
+    slide_area_pt = prs.slides[0].slide_width * prs.slides[0].slide_height
     content_split: dict[tuple, list[int]] = defaultdict(list)
     for slide_idx in content_slides_index:
         slide = prs.slides[slide_idx - 1]
         content_type = slide.get_content_type()
         layout_name = slide.slide_layout_name or "unnamed"
-        content_split[(layout_name, content_type)].append(slide_idx)
+        features = _layout_features(slide, slide_area_pt)
+        content_split[(layout_name, content_type) + features].append(slide_idx)
 
     async with asyncio.TaskGroup() as tg:
-        for (_, content_type), slides in content_split.items():
+        for group_key, slides in content_split.items():
+            content_type = group_key[1]
             template_id = max(slides, key=lambda x: len(prs.slides[x - 1].shapes))
             img_path = join(ppt_image_folder, f"slide_{template_id:04d}.jpg")
 
