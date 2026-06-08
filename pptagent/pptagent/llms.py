@@ -297,19 +297,11 @@ class AsyncLLM(LLM):
                     )
                 completion = ChatCompletion(**completion["result"][0])
             else:
-                if response_format is None:
-                    completion = await self.client.chat.completions.create(
-                        model=self.model,
-                        messages=system + history + message,
-                        **client_kwargs,
-                    )
-                else:
-                    completion = await self.client.chat.completions.parse(
-                        model=self.model,
-                        messages=system + history + message,
-                        response_format=response_format,
-                        **client_kwargs,
-                    )
+                completion = await self.client.chat.completions.create(
+                    model=self.model,
+                    messages=system + history + message,
+                    **client_kwargs,
+                )
 
         except Exception as e:
             logger.error("Error in AsyncLLM call: %s", e)
