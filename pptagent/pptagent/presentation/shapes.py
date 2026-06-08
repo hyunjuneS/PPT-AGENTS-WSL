@@ -1007,7 +1007,7 @@ class GroupShape(ShapeElement):
         """
         Initialize a GroupShape.
         """
-        # Create shape elements for each shape in the group
+        # Create shape elements for each shape in the group; skip nested groups
         self.data = [
             ShapeElement.from_shape(
                 self.slide_idx,
@@ -1021,15 +1021,20 @@ class GroupShape(ShapeElement):
             for i, sub_shape in enumerate(self.shape.shapes)
             if self.shape_cast.get(sub_shape.shape_type, -1) is not None
             and sub_shape.visible
+            and not isinstance(sub_shape, PPTXGroupShape)
         ]
 
-        # Apply shape bounds to each shape in the group
+        # Apply shape bounds, advancing through self.data in the same order
+        data_iter = iter(self.data)
         for idx, shape_bounds in enumerate(parse_groupshape(self.shape)):
-            if not self.shape.shapes[idx].visible:
+            sub_shape = self.shape.shapes[idx]
+            if not sub_shape.visible:
                 continue
-            if self.shape_cast.get(self.shape.shapes[idx].shape_type, -1) is None:
+            if self.shape_cast.get(sub_shape.shape_type, -1) is None:
                 continue
-            self.data[idx].style["shape_bounds"] = shape_bounds
+            if isinstance(sub_shape, PPTXGroupShape):
+                continue
+            next(data_iter).style["shape_bounds"] = shape_bounds
 
     def build(self, slide: PPTXSlide) -> PPTXSlide:
         """

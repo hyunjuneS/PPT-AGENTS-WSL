@@ -182,6 +182,7 @@ class SlideInducter:
         Async version: Perform content schema extraction for the presentation.
         """
         partial_funcs = []
+        valid_layout_names = []
         for layout_name, cluster in layout_induction.items():
             if layout_name == "functional_keys" or "content_schema" in cluster:
                 continue
@@ -190,6 +191,7 @@ class SlideInducter:
             contents = [para.text for para in slide.iter_paragraphs()] + [
                 shape.caption for shape in slide.shape_filter(Picture)
             ]
+            valid_layout_names.append(layout_name)
             partial_funcs.append(
                 partial(
                     self.schema_extractor,
@@ -199,10 +201,22 @@ class SlideInducter:
                 )
             )
 
+        async def _safe(func):
+            try:
+                return await func()
+            except Exception as e:
+                logger.warning("Schema extraction failed, skipping layout: %s", e)
+                return None
+
         schemas = await run_all(
-            partial_funcs, max_at_once=max_at_once, max_per_second=max_per_second
+            [partial(_safe, f) for f in partial_funcs],
+            max_at_once=max_at_once,
+            max_per_second=max_per_second,
         )
-        for layout_name, (_, schema) in zip(layout_induction.keys(), schemas):
+        for layout_name, result in zip(valid_layout_names, schemas):
+            if result is None:
+                continue
+            _, schema = result
             layout_induction[layout_name].update(schema)
 
         layout_induction["language"] = language_id(slide.to_text()).model_dump()
