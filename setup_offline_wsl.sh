@@ -70,8 +70,7 @@ export PLAYWRIGHT_OFFLINE=1
 export OFFLINE_NODE_MODULES="$OFFLINE_DIR/html2pptx"
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
-# FastText 모델을 수동으로 배치한 경우 아래 주석 해제:
-# export FASTTEXT_MODEL_PATH="$OFFLINE_DIR/fasttext/lid.176.bin"
+export FASTTEXT_MODEL_PATH="$OFFLINE_DIR/fasttext/lid.176.bin"
 EOF
 echo ""
 echo "=== 설정 완료 ==="

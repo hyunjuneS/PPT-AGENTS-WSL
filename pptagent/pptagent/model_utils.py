@@ -22,8 +22,9 @@ logger = get_logger(__name__)
 _LID_MODEL = None
 _USE_LANGID_FALLBACK = False
 
-# Bundled model path relative to this file (offline_resources/fasttext/lid.176.bin)
-_BUNDLED_MODEL = Path(__file__).parent.parent / "offline_resources" / "fasttext" / "lid.176.bin"
+# Bundled model path: repo_root/offline_resources/fasttext/lid.176.bin
+# __file__ = pptagent/pptagent/model_utils.py → .parent.parent.parent = repo root
+_BUNDLED_MODEL = Path(__file__).parent.parent.parent / "offline_resources" / "fasttext" / "lid.176.bin"
 
 
 def _get_lid_model():
