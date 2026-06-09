@@ -59,7 +59,7 @@ def _layout_features(slide: SlidePage, slide_area_pt: float) -> tuple:
     image_area = sum(s.width * s.height for s in slide.shape_filter(Picture))
     image_bucket = round(min(image_area / slide_area_pt, 1.0) * 4) / 4   # 0, 0.25, 0.5, 0.75, 1.0
     shape_bucket = min(len(slide.shapes) // 3, 3)                         # 0(0-2), 1(3-5), 2(6-8), 3(9+)
-    para_bucket  = min(len(list(slide.iter_paragraphs())) // 3, 3)        # same buckets as above
+    para_bucket  = min(len(list(slide.iter_paragraphs())) // 4, 3)        # 0(0-3), 1(4-7), 2(8-11), 3(12+)
     return (image_bucket, shape_bucket, para_bucket)
 
 
@@ -85,6 +85,10 @@ async def layout_split_no_vit(
         content_type = slide.get_content_type()
         layout_name = slide.slide_layout_name or "unnamed"
         features = _layout_features(slide, slide_area_pt)
+        # If image shapes exist but occupy negligible area (decorative/icons),
+        # treat the slide as text so it groups with other text slides.
+        if features[0] == 0.0 and content_type == "image":
+            content_type = "text"
         content_split[(layout_name, content_type) + features].append(slide_idx)
 
     async with asyncio.TaskGroup() as tg:
